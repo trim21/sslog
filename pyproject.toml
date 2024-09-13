@@ -1,0 +1,38 @@
+[build-system]
+requires = ["flit-core~=3.9"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "sslog"
+version = "0.0.0a0"
+description = "opinionated logger based on structlog"
+authors = [
+    { name = "trim21", email = "trim21me@gmail.com" },
+]
+readme = 'readme.md'
+license = { text = 'MIT' }
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Typing :: Typed"
+]
+
+requires-python = "~=3.8"
+
+dependencies = [
+    'structlog>=24.4.0,<25',
+]
+
+[project.optional-dependencies]
+dev = [
+    'rich',
+]
+
+[project.urls]
+Homepage = "https://github.com/trim21/ylog"
+
+[tool.black]
+target-version = ['py38']
+
+[tool.ruff]
+target-version = "py38"
