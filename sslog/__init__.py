@@ -3,10 +3,11 @@ from __future__ import annotations
 import contextlib
 import json
 from datetime import datetime
-from typing import Any, Protocol
+from typing import Any, Protocol, TypeVar
 
 import structlog
 from structlog.typing import EventDict
+from typing_extensions import ParamSpec
 
 from . import _default, _out
 from ._base import make_filtering_bound_logger
@@ -21,7 +22,10 @@ class _ConsoleRender(structlog.dev.ConsoleRenderer):
         return repr(val)
 
 
-def __json_pre(_1, _2, event_dict: EventDict) -> EventDict:
+_NOT_SET = object()
+
+
+def __json_pre(_1, method, event_dict: EventDict) -> EventDict:
     now = datetime.now()
 
     r = {
@@ -33,7 +37,13 @@ def __json_pre(_1, _2, event_dict: EventDict) -> EventDict:
     if msg is not None:
         r["msg"] = msg
 
-    r["extra"] = event_dict
+    exc_info = event_dict.pop("exc_info", _NOT_SET)
+    if exc_info is not _NOT_SET:
+        r["exc_info"] = exc_info
+
+    if event_dict:
+        r["extra"] = event_dict
+
     return r
 
 
@@ -52,7 +62,6 @@ if _default.use_json:
                 ],
                 additional_ignores=["logging", "sslog"],
             ),
-            structlog.dev.set_exc_info,
             structlog.processors.ExceptionRenderer(),
             structlog.processors.JSONRenderer(json.dumps, default=str),
         ],
@@ -97,6 +106,10 @@ else:
         cache_logger_on_first_use=True,
     )
 
+T = TypeVar("T")
+K = TypeVar("K", bound=Any)
+P = ParamSpec("P")
+
 
 class _Logger(Protocol):
     def bind(self, **kwargs) -> _Logger: ...
@@ -127,6 +140,18 @@ class _Logger(Protocol):
     def isEnabledFor(self, level: int) -> bool: ...
 
     def contextualize(self, **kwargs) -> contextlib.AbstractContextManager[None]: ...
+
+    def catch(
+        self,
+        exc: type[BaseException] | tuple[type[BaseException], ...] = Exception,
+        msg: str = ...,
+    ) -> Catcher: ...
+
+
+class Catcher(Protocol):
+    def __enter__(self) -> None: ...
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None: ...
+    def __call__(self, fn: T) -> T: ...
 
 
 logger: _Logger = structlog.get_logger()

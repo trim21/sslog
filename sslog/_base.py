@@ -5,6 +5,7 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
+from sslog._catch import Catcher
 from structlog import BoundLoggerBase
 from structlog._log_levels import LEVEL_TO_NAME
 from structlog.contextvars import bind_contextvars, reset_contextvars
@@ -33,6 +34,13 @@ class _BoundLoggerBase(BoundLoggerBase):
             yield
         finally:
             reset_contextvars(**ctx)
+
+    def catch(
+        self,
+        exc: type[BaseException] | tuple[type[BaseException], ...] = Exception,
+        msg: str = "",
+    ):
+        return Catcher(self, exc, msg)
 
 
 def _make_filtering_bound_logger(min_level: int) -> type[FilteringBoundLogger]:

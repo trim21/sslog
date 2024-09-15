@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import time
 from threading import Thread
 
@@ -11,6 +12,18 @@ logger.info("hello")
 logger.info("hello {}", "world")
 
 logger.bind(a=1).info("hello {}", "2")
+
+
+@logger.catch()
+def catched():
+    raise ValueError("failed")
+
+
+with contextlib.suppress(Exception):
+    catched()
+
+with logger.catch():
+    raise ValueError("failed")
 
 
 def w1():
