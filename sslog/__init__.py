@@ -4,13 +4,18 @@ import logging
 from datetime import datetime
 from typing import Any, Protocol
 
+import sys
+
 from structlog.typing import EventDict
-from typing_extensions import Self
 import structlog
 from structlog.contextvars import bind_contextvars, reset_contextvars
 
 from . import _default
 
+if sys.version_info >= (3, 11,):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 __all__ = ["context", "logger"]
 
@@ -43,12 +48,14 @@ if _default.use_json:
             __json_pre,
             structlog.contextvars.merge_contextvars,
             structlog.processors.add_log_level,
-            structlog.processors.CallsiteParameterAdder([
-                structlog.processors.CallsiteParameter.PATHNAME,
-                structlog.processors.CallsiteParameter.LINENO,
-                structlog.processors.CallsiteParameter.THREAD,
-                structlog.processors.CallsiteParameter.PROCESS,
-            ]),
+            structlog.processors.CallsiteParameterAdder(
+                [
+                    structlog.processors.CallsiteParameter.PATHNAME,
+                    structlog.processors.CallsiteParameter.LINENO,
+                    structlog.processors.CallsiteParameter.THREAD,
+                    structlog.processors.CallsiteParameter.PROCESS,
+                ]
+            ),
             structlog.dev.set_exc_info,
             structlog.processors.ExceptionRenderer(),
             structlog.processors.JSONRenderer(json.dumps, default=str),
@@ -61,14 +68,18 @@ if _default.use_json:
 else:
     structlog.configure(
         processors=[
-            structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S.%f", utc=False, key="time"),
+            structlog.processors.TimeStamper(
+                fmt="%Y-%m-%d %H:%M:%S.%f", utc=False, key="time"
+            ),
             structlog.contextvars.merge_contextvars,
-            structlog.processors.CallsiteParameterAdder([
-                structlog.processors.CallsiteParameter.MODULE,
-                structlog.processors.CallsiteParameter.FUNC_NAME,
-                structlog.processors.CallsiteParameter.THREAD,
-                structlog.processors.CallsiteParameter.PROCESS,
-            ]),
+            structlog.processors.CallsiteParameterAdder(
+                [
+                    structlog.processors.CallsiteParameter.MODULE,
+                    structlog.processors.CallsiteParameter.FUNC_NAME,
+                    structlog.processors.CallsiteParameter.THREAD,
+                    structlog.processors.CallsiteParameter.PROCESS,
+                ]
+            ),
             structlog.processors.add_log_level,
             structlog.processors.StackInfoRenderer(),
             structlog.dev.set_exc_info,
@@ -77,12 +88,12 @@ else:
                 timestamp_key="time",
                 event_key="msg",
                 pad_event=0,
-            )
+            ),
         ],
         wrapper_class=structlog.make_filtering_bound_logger(logging.NOTSET),
         context_class=dict,
         logger_factory=structlog.PrintLoggerFactory(),
-        cache_logger_on_first_use=True
+        cache_logger_on_first_use=True,
     )
 
 
@@ -100,7 +111,9 @@ class _Logger(Protocol):
     def exception(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
     def fatal(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
 
-    def log(self, level: int, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
+    def log(
+        self, level: int, event: str | None = None, *args: Any, **kw: Any
+    ) -> Any: ...
 
     def setLevel(self, level: int) -> None: ...
 

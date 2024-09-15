@@ -12,9 +12,9 @@ def env(key: str, typ: Callable[[Any], T], default=None) -> T:
 
     val = environ[key]
 
-    if typ == str:
+    if typ is str:
         return typ(val)
-    if typ == bool:
+    if typ is bool:
         if val.lower() in ["1", "true", "yes", "y", "ok", "on"]:
             return typ(True)
         if val.lower() in ["0", "false", "no", "n", "nok", "off"]:
@@ -22,12 +22,13 @@ def env(key: str, typ: Callable[[Any], T], default=None) -> T:
         raise ValueError(
             "Invalid environment variable '%s' (expected a boolean): '%s'" % (key, val)
         )
-    if typ == int:
+    if typ is int:
         try:
             return typ(val)
         except ValueError:
             raise ValueError(
-                "Invalid environment variable '%s' (expected an integer): '%s'" % (key, val)
+                "Invalid environment variable '%s' (expected an integer): '%s'"
+                % (key, val)
             ) from None
     raise ValueError("The requested type '%r' is not supported" % typ)
 
