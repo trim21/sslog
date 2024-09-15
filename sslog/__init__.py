@@ -1,21 +1,21 @@
 import contextlib
 import json
 import logging
+import sys
 from datetime import datetime
 from typing import Any, Protocol
 
-import sys
-
-from structlog.typing import EventDict
 import structlog
 from structlog.contextvars import bind_contextvars, reset_contextvars
+from structlog.typing import EventDict
 
 from . import _default
+
 
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
-    from typing_extensions import Self
+    from typing import Self
 
 __all__ = ["context", "logger"]
 
@@ -60,7 +60,9 @@ if _default.use_json:
             structlog.processors.ExceptionRenderer(),
             structlog.processors.JSONRenderer(json.dumps, default=str),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(logging.NOTSET),
+        wrapper_class=structlog.make_filtering_bound_logger(
+            logging.getLevelNamesMapping()[_default.json_level.upper()]
+        ),
         logger_factory=structlog.WriteLoggerFactory(),
         cache_logger_on_first_use=True,
     )
@@ -90,7 +92,9 @@ else:
                 pad_event=0,
             ),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(logging.NOTSET),
+        wrapper_class=structlog.make_filtering_bound_logger(
+            logging.getLevelNamesMapping()[_default.text_level.upper()]
+        ),
         context_class=dict,
         logger_factory=structlog.PrintLoggerFactory(),
         cache_logger_on_first_use=True,

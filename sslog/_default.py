@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from os import environ
 from typing import Any, TypeVar
@@ -34,3 +35,17 @@ def env(key: str, typ: Callable[[Any], T], default=None) -> T:
 
 
 use_json: bool = env("SSLOG_JSON", bool, False)
+json_level: str = env("SSLOG_JSON_LEVEL", str, default="INFO")
+text_level: str = env("SSLOG_TEXT_LEVEL", str, default="NOTSET")
+
+__levels = logging.getLevelNamesMapping()
+
+if json_level.upper() not in __levels:
+    raise ValueError(
+        f"SSLOG_JSON_LEVEL={json_level!r} is not valid default logging level, only allow one of {list(__levels.keys())}"
+    )
+
+if text_level.upper() not in __levels:
+    raise ValueError(
+        f"SSLOG_TEXT_LEVEL={json_level!r} is not valid default logging level, only allow one of {list(__levels.keys())}"
+    )
