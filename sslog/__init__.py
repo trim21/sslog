@@ -11,6 +11,7 @@ from structlog.contextvars import bind_contextvars, reset_contextvars
 from structlog.typing import EventDict
 
 from . import _default, _out
+from ._base import make_filtering_bound_logger
 
 
 if sys.version_info >= (3, 11):
@@ -55,13 +56,14 @@ if _default.use_json:
                     structlog.processors.CallsiteParameter.LINENO,
                     structlog.processors.CallsiteParameter.THREAD,
                     structlog.processors.CallsiteParameter.PROCESS,
-                ]
+                ],
+                additional_ignores=["logging", "sslog"],
             ),
             structlog.dev.set_exc_info,
             structlog.processors.ExceptionRenderer(),
             structlog.processors.JSONRenderer(json.dumps, default=str),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(
+        wrapper_class=make_filtering_bound_logger(
             _default.LOGGING_LEVELS[_default.json_level.upper()]
         ),
         logger_factory=_out.PrintLoggerFactory(),
@@ -81,7 +83,8 @@ else:
                     structlog.processors.CallsiteParameter.FUNC_NAME,
                     structlog.processors.CallsiteParameter.THREAD,
                     structlog.processors.CallsiteParameter.PROCESS,
-                ]
+                ],
+                additional_ignores=["logging", "sslog"],
             ),
             structlog.processors.add_log_level,
             structlog.processors.StackInfoRenderer(),
@@ -93,7 +96,7 @@ else:
                 pad_event=0,
             ),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(
+        wrapper_class=make_filtering_bound_logger(
             _default.LOGGING_LEVELS[_default.text_level.upper()]
         ),
         context_class=dict,
