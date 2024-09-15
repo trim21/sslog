@@ -26,7 +26,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    'rich',
+    "mypy",
+    "pre-commit"
 ]
 
 [project.urls]
