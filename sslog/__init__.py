@@ -2,24 +2,17 @@ from __future__ import annotations
 
 import contextlib
 import json
-import sys
 from datetime import datetime
 from typing import Any, Protocol
 
 import structlog
-from structlog.contextvars import bind_contextvars, reset_contextvars
 from structlog.typing import EventDict
 
 from . import _default, _out
 from ._base import make_filtering_bound_logger
 
 
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    from typing_extensions import Self
-
-__all__ = ["context", "logger"]
+__all__ = ["logger"]
 
 
 class _ConsoleRender(structlog.dev.ConsoleRenderer):
@@ -106,10 +99,10 @@ else:
 
 
 class _Logger(Protocol):
-    def bind(self, **kwargs) -> Self: ...
-    def unbind(self, *keys: str) -> Self: ...
-    def try_unbind(self, *keys: str) -> Self: ...
-    def new(self, **new_values: Any) -> Self: ...
+    def bind(self, **kwargs) -> _Logger: ...
+    def unbind(self, *keys: str) -> _Logger: ...
+    def try_unbind(self, *keys: str) -> _Logger: ...
+    def new(self, **new_values: Any) -> _Logger: ...
 
     def debug(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
     def info(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
@@ -133,12 +126,7 @@ class _Logger(Protocol):
 
     def isEnabledFor(self, level: int) -> bool: ...
 
+    def contextualize(self, **kwargs) -> contextlib.AbstractContextManager[None]: ...
+
 
 logger: _Logger = structlog.get_logger()
-
-
-@contextlib.contextmanager
-def context(**kwargs):
-    ctx = bind_contextvars(**kwargs)
-    yield
-    reset_contextvars(**ctx)

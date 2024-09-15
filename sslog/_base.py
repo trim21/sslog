@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import contextlib
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from structlog import BoundLoggerBase
 from structlog._log_levels import LEVEL_TO_NAME
+from structlog.contextvars import bind_contextvars, reset_contextvars
 from structlog.typing import FilteringBoundLogger
 
 
@@ -20,6 +23,16 @@ def exception(self: Any, event: str, *args: Any, **kw: Any) -> Any:
 
 def make_filtering_bound_logger(min_level: int) -> type[FilteringBoundLogger]:
     return LEVEL_TO_FILTERING_LOGGER[min_level]
+
+
+class _BoundLoggerBase(BoundLoggerBase):
+    @contextlib.contextmanager
+    def contextualize(self, **kwargs):
+        ctx = bind_contextvars(**kwargs)
+        try:
+            yield
+        finally:
+            reset_contextvars(**ctx)
 
 
 def _make_filtering_bound_logger(min_level: int) -> type[FilteringBoundLogger]:
@@ -62,7 +75,7 @@ def _make_filtering_bound_logger(min_level: int) -> type[FilteringBoundLogger]:
 
     return type(
         f"BoundLoggerFilteringAt{LEVEL_TO_NAME.get(min_level, 'Notset').capitalize()}",
-        (BoundLoggerBase,),
+        (_BoundLoggerBase,),
         meths,
     )
 
