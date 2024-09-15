@@ -12,7 +12,7 @@ from structlog.contextvars import bind_contextvars, reset_contextvars
 
 from . import _default
 
-if sys.version_info >= (3, 11,):
+if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
