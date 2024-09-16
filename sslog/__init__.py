@@ -3,20 +3,57 @@ from __future__ import annotations
 import contextlib
 import json
 from datetime import datetime
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar, cast
 
 import structlog
+from structlog.dev import Column
 from structlog.typing import EventDict
 from typing_extensions import ParamSpec, Self
 
-from . import _default, _out
+from . import _default, _out, _process
 from ._base import make_filtering_bound_logger
 
 
 __all__ = ["logger"]
 
 
+class _LogLevelColumnFormatter:
+    level_styles: dict[str, str] | None
+    reset_style: str
+    width: int
+
+    def __init__(
+        self,
+        level_styles: dict[str, str],
+        reset_style: str,
+        width: int | None = None,
+    ) -> None:
+        self.level_styles = level_styles
+        self.width = width
+        if level_styles:
+            self.reset_style = reset_style
+        else:
+            self.reset_style = ""
+
+    def __call__(self, key: str, value: object) -> str:
+        level = cast(str, value)
+        style = "" if self.level_styles is None else self.level_styles.get(level, "")
+
+        return f"{style}[{level:{self.width}s}]{self.reset_style}"
+
+
 class _ConsoleRender(structlog.dev.ConsoleRenderer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._columns[1] = Column(
+            "level",
+            _LogLevelColumnFormatter(
+                self._columns[1].formatter.level_styles,
+                reset_style=self._columns[1].formatter.reset_style,
+                width=8,
+            ),
+        )
+
     def _repr(self, val: Any) -> str:
         return repr(val)
 
@@ -77,9 +114,7 @@ if _default.use_json:
 else:
     structlog.configure(
         processors=[
-            structlog.processors.TimeStamper(
-                fmt="%Y-%m-%d %H:%M:%S.%f", utc=False, key="time"
-            ),
+            _process.add_text_time,
             structlog.contextvars.merge_contextvars,
             structlog.processors.CallsiteParameterAdder(
                 [
@@ -96,7 +131,8 @@ else:
             _ConsoleRender(
                 timestamp_key="time",
                 event_key="msg",
-                pad_event=0,
+                # pad_event=0,
+                pad_level=False,
             ),
         ],
         wrapper_class=make_filtering_bound_logger(
@@ -125,6 +161,7 @@ class _Logger(Protocol):
     def error(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
     def exception(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
     def fatal(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
+    def critical(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
 
     def log(
         self, level: int, event: str | None = None, *args: Any, **kw: Any

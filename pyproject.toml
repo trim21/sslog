@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "sslog"
-version = "0.0.0a29"
+version = "0.0.0a33"
 description = "opinionated logger based on structlog"
 authors = [
     { name = "trim21", email = "trim21me@gmail.com" },
@@ -20,7 +20,7 @@ classifiers = [
 requires-python = "~=3.8"
 
 dependencies = [
-    'structlog>=24.4.0,<25',
+    'structlog==24.4.0',
     'typing-extensions',
 ]
 
