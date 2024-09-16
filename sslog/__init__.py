@@ -131,8 +131,7 @@ else:
             _ConsoleRender(
                 timestamp_key="time",
                 event_key="msg",
-                # pad_event=0,
-                pad_level=False,
+                pad_event=40,
             ),
         ],
         wrapper_class=make_filtering_bound_logger(
