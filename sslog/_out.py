@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-import sys
+from sys import stderr
 from typing import Any
 
 
@@ -10,7 +8,7 @@ class PrintLogger:
 
     def msg(self, message: str) -> None:
         """Print *message*."""
-        sys.stderr.write(message + "\n")
+        stderr.write(message + "\n")
 
     log = debug = info = warn = warning = msg
     fatal = failure = err = error = critical = exception = msg
