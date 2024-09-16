@@ -17,20 +17,22 @@ __all__ = ["logger"]
 
 
 class _ConsoleRender(structlog.dev.ConsoleRenderer):
-
     def _repr(self, val: Any) -> str:
         return repr(val)
 
 
 _NOT_SET = object()
 
+_start_up = datetime.now()
 
-def __json_pre(_1, method, event_dict: EventDict) -> EventDict:
+
+def __json_pre(_1, _2, event_dict: EventDict) -> EventDict:
     now = datetime.now()
 
     r = {
         "time": now.astimezone().isoformat(timespec="microseconds"),
         "timestamp": now.timestamp(),
+        "elapsed": (now - _start_up).total_seconds(),
     }
 
     msg = event_dict.pop("event", None)
@@ -84,7 +86,6 @@ else:
                     structlog.processors.CallsiteParameter.MODULE,
                     structlog.processors.CallsiteParameter.FUNC_NAME,
                     structlog.processors.CallsiteParameter.THREAD,
-                    structlog.processors.CallsiteParameter.PROCESS,
                 ],
                 additional_ignores=["logging", "sslog"],
             ),
