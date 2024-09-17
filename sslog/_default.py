@@ -45,7 +45,6 @@ if sys.version_info >= (3, 11):
     LOGGING_LEVELS = logging.getLevelNamesMapping()
 else:
     LOGGING_LEVELS = {
-        "CRITICAL": logging.CRITICAL,
         "FATAL": logging.FATAL,
         "ERROR": logging.ERROR,
         "WARN": logging.WARNING,
