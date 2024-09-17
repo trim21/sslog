@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import logging
 from collections.abc import Callable
+from inspect import isfunction
 from typing import Any
 
 from sslog._catch import Catcher
@@ -40,7 +41,9 @@ class _BoundLoggerBase(BoundLoggerBase):
         exc: type[BaseException] | tuple[type[BaseException], ...] = Exception,
         msg: str = "",
     ):
-        return Catcher(self, exc, msg)
+        if isfunction(exc):
+            return Catcher(self, Exception, msg)(exc)
+        return Catcher(self, exc, msg)(exc)
 
 
 def _make_filtering_bound_logger(min_level: int) -> type[FilteringBoundLogger]:

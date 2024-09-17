@@ -8,13 +8,22 @@ from typing import Any, Protocol, TypeVar, cast
 import structlog
 from structlog.dev import Column
 from structlog.typing import EventDict
-from typing_extensions import ParamSpec, Self
+from typing_extensions import ParamSpec, Self, overload
 
 from . import _default, _out, _process
 from ._base import make_filtering_bound_logger
 
 
 __all__ = ["logger"]
+
+
+class LazyValue:
+
+    def __init__(self, fn):
+        self.fn = fn
+
+    def __format__(self, format_spec):
+        return self.fn().__format__(format_spec)
 
 
 class _LogLevelColumnFormatter:
@@ -29,7 +38,7 @@ class _LogLevelColumnFormatter:
         width: int | None = None,
     ) -> None:
         self.level_styles = level_styles
-        self.width = width
+        self.width = width or 0
         if level_styles:
             self.reset_style = reset_style
         else:
@@ -178,6 +187,10 @@ class _Logger(Protocol):
 
     def contextualize(self, **kwargs) -> contextlib.AbstractContextManager[None]: ...
 
+    @overload
+    def catch(self, fn: T) -> T: ...
+
+    @overload
     def catch(
         self,
         exc: type[BaseException] | tuple[type[BaseException], ...] = Exception,
