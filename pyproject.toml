@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "sslog"
-version = "0.0.0a36"
+version = "0.0.0a37"
 description = "opinionated logger based on structlog"
 authors = [
     { name = "trim21", email = "trim21me@gmail.com" },
@@ -37,6 +37,7 @@ Homepage = "https://github.com/trim21/sslog"
 
 [tool.black]
 target-version = ['py38']
+line-length = 100
 
 [tool.ruff]
 target-version = "py38"

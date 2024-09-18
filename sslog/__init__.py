@@ -8,13 +8,13 @@ from typing import Any, Protocol, TypeVar, cast
 import structlog
 from structlog.dev import Column
 from structlog.typing import EventDict
-from typing_extensions import ParamSpec, Self, overload
+from typing_extensions import ParamSpec, Self, overload, LiteralString
 
 from . import _default, _out, _process
-from ._base import make_filtering_bound_logger
+from ._base import make_filtering_bound_logger, FatalError
 
 
-__all__ = ["logger"]
+__all__ = ["logger", "FatalError"]
 
 
 class LazyValue:
@@ -59,7 +59,7 @@ class _ConsoleRender(structlog.dev.ConsoleRenderer):
             _LogLevelColumnFormatter(
                 self._columns[1].formatter.level_styles,
                 reset_style=self._columns[1].formatter.reset_style,
-                width=8,
+                width=7,
             ),
         )
 
@@ -162,16 +162,21 @@ class _Logger(Protocol):
     def try_unbind(self, *keys: str) -> Self: ...
     def new(self, **new_values: Any) -> Self: ...
 
-    def debug(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
-    def info(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
-    def warning(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
-    def error(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
-    def exception(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
-    def fatal(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
+    def trace(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any: ...
 
-    # def log(
-    #     self, level: int, event: str | None = None, *args: Any, **kw: Any
-    # ) -> Any: ...
+    def debug(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any: ...
+
+    def info(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any: ...
+
+    def warning(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any: ...
+
+    def error(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any: ...
+
+    def exception(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any:
+        """log a message at error level and capture current exception"""
+
+    def fatal(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any:
+        """log a message at fatal level and raise a FatalError exception"""
 
     def setLevel(self, level: int) -> None: ...
 

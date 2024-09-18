@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import contextlib
 import logging
-import sys
 from collections.abc import Callable
 from inspect import isfunction
 from typing import Any
 
 from sslog._catch import Catcher
 from structlog import BoundLoggerBase
-from structlog._log_levels import LEVEL_TO_NAME
 from structlog.contextvars import bind_contextvars, reset_contextvars
 from structlog.typing import FilteringBoundLogger
+
+from sslog._default import LOGGING_LEVELS, LEVEL_TRACE
 
 
 def _nop(self: Any, event: str, *args: Any, **kw: Any) -> Any:
@@ -24,13 +24,21 @@ def exception(self: Any, event: str, *args: Any, **kw: Any) -> Any:
     return self.error(event, *args, **kw)
 
 
+class FatalError(Exception):
+    def __init__(self, msg: str, extra: dict[str, Any]):
+        self.msg = msg
+        self.extra = extra
+
+
 def _fatal(self: Any, event: str, *args: Any, **kw: Any) -> Any:
     if not args:
-        self._proxy_to_logger("fatal", event, **kw)
+        msg = event
     else:
-        self._proxy_to_logger("fatal", event.format(*args), **kw)
+        msg = event.format(*args)
 
-    sys.exit(1)
+    self._proxy_to_logger("fatal", msg, **kw)
+
+    raise FatalError(msg, kw)
 
 
 def make_filtering_bound_logger(min_level: int) -> type[FilteringBoundLogger]:
@@ -56,22 +64,23 @@ class _BoundLoggerBase(BoundLoggerBase):
         return Catcher(self, exc, msg)(exc)
 
 
-def _make_filtering_bound_logger(min_level: int) -> type[FilteringBoundLogger]:
-    def make_method(
-        level: int,
-    ) -> Callable[..., Any]:
+LEVEL_TO_NAME = {value: key.lower() for key, value in LOGGING_LEVELS.items()}
+
+
+def _make_filtering_bound_logger(min_level: int) -> type:
+    def make_method(level: int) -> Callable[..., Any]:
         if level < min_level:
             return _nop
 
-        name = LEVEL_TO_NAME[level]
+        lvl_name = LEVEL_TO_NAME[level]
 
         def meth(self: Any, event: str, *args: Any, **kw: Any) -> Any:
             if not args:
-                return self._proxy_to_logger(name, event, **kw)
+                return self._proxy_to_logger(lvl_name, event, **kw)
 
-            return self._proxy_to_logger(name, event.format(*args), **kw)
+            return self._proxy_to_logger(lvl_name, event.format(*args), **kw)
 
-        meth.__name__ = name
+        meth.__name__ = lvl_name
 
         return meth
 
@@ -84,7 +93,7 @@ def _make_filtering_bound_logger(min_level: int) -> type[FilteringBoundLogger]:
     meths["msg"] = meths["info"]
 
     return type(
-        f"BoundLoggerFilteringAt{LEVEL_TO_NAME.get(min_level, 'Notset').capitalize()}",
+        f"BoundLoggerFilteringAt{LEVEL_TO_NAME[min_level].capitalize()}",
         (_BoundLoggerBase,),
         meths,
     )
@@ -92,6 +101,7 @@ def _make_filtering_bound_logger(min_level: int) -> type[FilteringBoundLogger]:
 
 # Pre-create all possible filters to make them pickleable.
 BoundLoggerFilteringAtNotset = _make_filtering_bound_logger(logging.NOTSET)
+BoundLoggerFilteringAtTrace = _make_filtering_bound_logger(LEVEL_TRACE)
 BoundLoggerFilteringAtDebug = _make_filtering_bound_logger(logging.DEBUG)
 BoundLoggerFilteringAtInfo = _make_filtering_bound_logger(logging.INFO)
 BoundLoggerFilteringAtWarning = _make_filtering_bound_logger(logging.WARNING)
@@ -104,5 +114,6 @@ LEVEL_TO_FILTERING_LOGGER = {
     logging.WARNING: BoundLoggerFilteringAtWarning,
     logging.INFO: BoundLoggerFilteringAtInfo,
     logging.DEBUG: BoundLoggerFilteringAtDebug,
+    LEVEL_TRACE: BoundLoggerFilteringAtTrace,
     logging.NOTSET: BoundLoggerFilteringAtNotset,
 }
