@@ -29,7 +29,8 @@ dev = [
     "rich",
     "colorama",
     "mypy",
-    "pre-commit"
+    "pre-commit",
+    "loguru",
 ]
 
 [project.urls]
