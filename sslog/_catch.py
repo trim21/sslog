@@ -61,8 +61,8 @@ class Catcher:
         else:
 
             @wraps(function)
-            def catch_wrapper(*args, **kwargs):
+            def catch_wrapper(*args, **kwargs) -> T:
                 with self:
                     return function(*args, **kwargs)
 
-        return catch_wrapper
+        return catch_wrapper  # type: ignore

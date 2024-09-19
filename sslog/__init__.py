@@ -26,11 +26,11 @@ P = ParamSpec("P")
 
 
 class LazyValue:
-    fn: Callable[[], T]
+    fn: Callable[[], Any]
 
     __slots__ = ("fn",)
 
-    def __init__(self, fn: Callable[[], T]) -> None:
+    def __init__(self, fn: Callable[[], Any]) -> None:
         self.fn = fn
 
     def __format__(self, format_spec: str) -> str:
