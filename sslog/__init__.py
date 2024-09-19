@@ -2,28 +2,39 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 from datetime import datetime
-from typing import Any, Protocol, TypeVar, cast
+from logging import NOTSET
+from typing import Any, Protocol, TypeVar, cast, Callable
 
 import structlog
 from structlog.dev import Column
 from structlog.typing import EventDict
-from typing_extensions import ParamSpec, Self, overload, LiteralString
+from typing_extensions import ParamSpec, Self, overload
 
 from . import _default, _out, _process
-from ._base import make_filtering_bound_logger, FatalError
+from ._base import make_filtering_bound_logger
 
 
-__all__ = ["logger", "FatalError"]
+__all__ = ["logger", "LazyValue", "InterceptHandler"]
+
+from ._default import LEVEL_TRACE
+
+T = TypeVar("T")
+K = TypeVar("K", bound=Any)
+P = ParamSpec("P")
 
 
 class LazyValue:
+    fn: Callable[[], T]
 
-    def __init__(self, fn):
+    __slots__ = ("fn",)
+
+    def __init__(self, fn: Callable[[], T]) -> None:
         self.fn = fn
 
-    def __format__(self, format_spec):
-        return self.fn().__format__(format_spec)
+    def __format__(self, format_spec: str) -> str:
+        return format(self.fn(), format_spec)
 
 
 class _LogLevelColumnFormatter:
@@ -65,6 +76,12 @@ class _ConsoleRender(structlog.dev.ConsoleRenderer):
 
     def _repr(self, val: Any) -> str:
         return repr(val)
+
+    @staticmethod
+    def get_default_level_styles(colors: bool = True) -> Any:
+        c = structlog.dev.ConsoleRenderer.get_default_level_styles(colors)
+        c["trace"] = structlog.dev.CYAN
+        return c
 
 
 _NOT_SET = object()
@@ -147,13 +164,9 @@ else:
             _default.LOGGING_LEVELS[_default.text_level.upper()]
         ),
         context_class=dict,
-        logger_factory=_out.PrintLoggerFactory(),
+        logger_factory=lambda *args: _out.FlushLogger(),
         cache_logger_on_first_use=True,
     )
-
-T = TypeVar("T")
-K = TypeVar("K", bound=Any)
-P = ParamSpec("P")
 
 
 class _Logger(Protocol):
@@ -162,21 +175,22 @@ class _Logger(Protocol):
     def try_unbind(self, *keys: str) -> Self: ...
     def new(self, **new_values: Any) -> Self: ...
 
-    def trace(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any: ...
+    def trace(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
 
-    def debug(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any: ...
+    def debug(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
 
-    def info(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any: ...
+    def info(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
 
-    def warning(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any: ...
+    def warning(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
 
-    def error(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any: ...
+    def error(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
 
-    def exception(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any:
+    def exception(self, event: str | None = None, *args: Any, **kw: Any) -> Any:
         """log a message at error level and capture current exception"""
 
-    def fatal(self, event: LiteralString | None = None, *args: Any, **kw: Any) -> Any:
-        """log a message at fatal level and raise a FatalError exception"""
+    def fatal(self, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
+
+    def log(self, level: int, event: str | None = None, *args: Any, **kw: Any) -> Any: ...
 
     def setLevel(self, level: int) -> None: ...
 
@@ -200,6 +214,8 @@ class _Logger(Protocol):
         msg: str = ...,
     ) -> Catcher: ...
 
+    def _proxy_to_logger(self, name: str, event: str | None, *args: Any) -> None: ...
+
 
 class Catcher(Protocol):
     def __enter__(self) -> None: ...
@@ -208,3 +224,28 @@ class Catcher(Protocol):
 
 
 logger: _Logger = structlog.get_logger()
+
+
+_STD_LEVEL_TO_NAME = {
+    logging.FATAL: "FATAL".lower(),
+    logging.ERROR: "ERROR".lower(),
+    logging.WARNING: "WARNING".lower(),
+    logging.INFO: "INFO".lower(),
+    logging.DEBUG: "DEBUG".lower(),
+    LEVEL_TRACE: "TRACE".lower(),
+}
+
+
+class InterceptHandler(logging.Handler):
+    def __init__(self, level: int = NOTSET):
+        super().__init__(max(level, logger.level))
+
+    def handle(self, record):
+        lvl = record.levelno
+        if lvl < self.level:
+            return
+
+        lvl_name = _STD_LEVEL_TO_NAME[lvl]
+
+        # Get corresponding level if it exists.
+        return logger._proxy_to_logger(lvl_name, record.getMessage())

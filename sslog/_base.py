@@ -24,23 +24,6 @@ def exception(self: Any, event: str, *args: Any, **kw: Any) -> Any:
     return self.error(event, *args, **kw)
 
 
-class FatalError(Exception):
-    def __init__(self, msg: str, extra: dict[str, Any]):
-        self.msg = msg
-        self.extra = extra
-
-
-def _fatal(self: Any, event: str, *args: Any, **kw: Any) -> Any:
-    if not args:
-        msg = event
-    else:
-        msg = event.format(*args)
-
-    self._proxy_to_logger("fatal", msg, **kw)
-
-    raise FatalError(msg, kw)
-
-
 def make_filtering_bound_logger(min_level: int) -> type[FilteringBoundLogger]:
     return LEVEL_TO_FILTERING_LOGGER[min_level]
 
@@ -84,12 +67,11 @@ def _make_filtering_bound_logger(min_level: int) -> type:
 
         return meth
 
-    meths: dict[str, Any] = {}
+    meths: dict[str, Any] = {"level": min_level}
     for lvl, name in LEVEL_TO_NAME.items():
         meths[name] = make_method(lvl)
 
     meths["exception"] = exception
-    meths["fatal"] = _fatal
     meths["msg"] = meths["info"]
 
     return type(
