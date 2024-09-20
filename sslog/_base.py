@@ -44,7 +44,7 @@ class _BoundLoggerBase(BoundLoggerBase):
     ):
         if isfunction(exc):
             return Catcher(self, Exception, msg)(exc)  # type: ignore
-        return Catcher(self, exc, msg)(exc)  # type: ignore
+        return Catcher(self, exc, msg)  # type: ignore
 
 
 LEVEL_TO_NAME = {value: key.lower() for key, value in LOGGING_LEVELS.items()}
