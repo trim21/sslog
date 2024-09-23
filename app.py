@@ -4,6 +4,9 @@ from sslog import logger, InterceptHandler
 
 import logging
 
+print(logger.named("na").named("qq").info("hello"))
+print(logger.named("q").name)
+print(logger.named("q").info("test"))
 
 logger.trace("hello")
 logger.debug("hello")

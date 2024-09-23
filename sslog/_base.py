@@ -4,7 +4,7 @@ import contextlib
 import logging
 from collections.abc import Callable
 from inspect import isfunction
-from typing import Any
+from typing import Any, Type
 
 from sslog._catch import Catcher
 from structlog import BoundLoggerBase
@@ -24,7 +24,7 @@ def exception(self: Any, event: str, *args: Any, **kw: Any) -> Any:
     return self.error(event, *args, **kw)
 
 
-def make_filtering_bound_logger(min_level: int) -> type[FilteringBoundLogger]:
+def make_filtering_bound_logger(min_level: int) -> Type[FilteringBoundLogger]:
     return LEVEL_TO_FILTERING_LOGGER[min_level]
 
 
@@ -45,6 +45,16 @@ class _BoundLoggerBase(BoundLoggerBase):
         if isfunction(exc):
             return Catcher(self, Exception, msg)(exc)  # type: ignore
         return Catcher(self, exc, msg)  # type: ignore
+
+    def named(self, name: str):
+        if self.name:
+            return self.bind(logger_name=self.name + "." + name)
+
+        return self.bind(logger_name=name)
+
+    @property
+    def name(self) -> str:
+        return self._context.get("logger_name") or ""
 
 
 LEVEL_TO_NAME = {value: key.lower() for key, value in LOGGING_LEVELS.items()}
@@ -71,7 +81,11 @@ def _make_filtering_bound_logger(min_level: int) -> type:
     for lvl, name in LEVEL_TO_NAME.items():
         meths[name] = make_method(lvl)
 
-    meths["exception"] = exception
+    if min_level <= logging.ERROR:
+        meths["exception"] = exception
+    else:
+        meths["exception"] = _nop
+
     meths["msg"] = meths["info"]
 
     return type(
