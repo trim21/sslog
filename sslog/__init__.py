@@ -214,7 +214,7 @@ class _Logger(Protocol):
         msg: str = ...,
     ) -> Catcher: ...
 
-    def _proxy_to_logger(self, name: str, event: str | None, *args: Any) -> None: ...
+    def _proxy_to_logger(self, name: str, event: str | None, *args: Any, **kwargs: Any) -> None: ...
 
 
 class Catcher(Protocol):
@@ -248,4 +248,4 @@ class InterceptHandler(logging.Handler):
         lvl_name = _STD_LEVEL_TO_NAME[lvl]
 
         # Get corresponding level if it exists.
-        return logger._proxy_to_logger(lvl_name, record.getMessage())
+        return logger._proxy_to_logger(lvl_name, record.getMessage(), logger_name=record.name)
