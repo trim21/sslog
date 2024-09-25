@@ -106,10 +106,19 @@ def __json_pre(_1, _2, event_dict: EventDict) -> EventDict:
     if exc_info is not _NOT_SET:
         r["exc_info"] = exc_info
 
+    std_log_record = event_dict.pop("_record", _NOT_SET)
+    if std_log_record is not _NOT_SET:
+        r["_record"] = std_log_record
+
     if event_dict:
         r["extra"] = event_dict
 
     return r
+
+
+def __remove_stdlib_logging_record(_1, _2, event_dict: EventDict) -> EventDict:
+    event_dict.pop("_record", None)
+    return event_dict
 
 
 if _default.use_json:
@@ -127,6 +136,7 @@ if _default.use_json:
                 ],
                 additional_ignores=["logging", "sslog"],
             ),
+            __remove_stdlib_logging_record,
             structlog.processors.ExceptionRenderer(),
             structlog.processors.JSONRenderer(json.dumps, default=str),
         ],
@@ -150,6 +160,7 @@ else:
                 ],
                 additional_ignores=["logging", "sslog"],
             ),
+            __remove_stdlib_logging_record,
             structlog.processors.add_log_level,
             structlog.processors.StackInfoRenderer(),
             structlog.dev.set_exc_info,
@@ -250,4 +261,9 @@ class InterceptHandler(logging.Handler):
         lvl_name = _STD_LEVEL_TO_NAME[lvl]
 
         # Get corresponding level if it exists.
-        return logger._proxy_to_logger(lvl_name, record.getMessage(), logger_name=record.name)
+        return logger._proxy_to_logger(
+            lvl_name,
+            record.getMessage(),
+            logger_name=record.name,
+            _record=record,
+        )

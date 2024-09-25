@@ -1,4 +1,7 @@
 import sys
+import os
+
+os.environ["SSLOG_JSON"] = "True"
 
 from sslog import logger, InterceptHandler
 
