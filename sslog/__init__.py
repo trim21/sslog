@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
+import threading
 from datetime import datetime
 from logging import NOTSET
 from typing import Any, Protocol, TypeVar, cast, Callable
@@ -16,7 +17,7 @@ from . import _default, _out, _process
 from ._base import make_filtering_bound_logger
 
 
-__all__ = ["logger", "LazyValue", "InterceptHandler"]
+__all__ = ["logger", "LazyValue", "InterceptHandler", "Logger"]
 
 from ._default import LEVEL_TRACE
 
@@ -121,17 +122,33 @@ def __remove_stdlib_logging_record(_1, _2, event_dict: EventDict) -> EventDict:
     return event_dict
 
 
+if hasattr(threading, "get_native_id"):
+
+    def __get_thread_id() -> int:
+        return threading.get_native_id()
+
+else:
+
+    def __get_thread_id() -> int:
+        return threading.get_ident()
+
+
+def __add_tid(_1, _2, event_dict: EventDict) -> EventDict:
+    event_dict["thread"] = __get_thread_id()
+    return event_dict
+
+
 if _default.use_json:
     structlog.configure(
         processors=[
             __json_pre,
+            __add_tid,
             structlog.contextvars.merge_contextvars,
             structlog.processors.add_log_level,
             structlog.processors.CallsiteParameterAdder(
                 [
                     structlog.processors.CallsiteParameter.PATHNAME,
                     structlog.processors.CallsiteParameter.LINENO,
-                    structlog.processors.CallsiteParameter.THREAD,
                     structlog.processors.CallsiteParameter.PROCESS,
                 ],
                 additional_ignores=["logging", "sslog"],
@@ -151,12 +168,12 @@ else:
     structlog.configure(
         processors=[
             _process.add_text_time,
+            __add_tid,
             structlog.contextvars.merge_contextvars,
             structlog.processors.CallsiteParameterAdder(
                 [
                     structlog.processors.CallsiteParameter.MODULE,
                     structlog.processors.CallsiteParameter.FUNC_NAME,
-                    structlog.processors.CallsiteParameter.THREAD,
                 ],
                 additional_ignores=["logging", "sslog"],
             ),
@@ -180,7 +197,7 @@ else:
     )
 
 
-class _Logger(Protocol):
+class Logger(Protocol):
     def named(self, name: str) -> Self: ...
 
     def bind(self, **kwargs) -> Self: ...
@@ -236,7 +253,7 @@ class Catcher(Protocol):
     def __call__(self, fn: T) -> T: ...
 
 
-logger: _Logger = structlog.get_logger()
+logger: Logger = structlog.get_logger()
 
 
 _STD_LEVEL_TO_NAME = {
