@@ -1,28 +1,22 @@
-import sys
-import os
+from structlog import get_logger
 
-os.environ["SSLOG_JSON"] = "True"
+import asyncio
 
-from sslog import logger, InterceptHandler
+from structlog.contextvars import bind_contextvars
 
-import logging
+logger = get_logger()
 
-print(logger.named("na").named("qq").info("hello"))
-print(logger.named("q").name)
-print(logger.named("q").info("test"))
 
-logger.trace("hello")
-logger.debug("hello")
 logger.info("hello")
-logger.warning("hello")
-logger.error("hello")
-logger.fatal("hello")
 
-print("stdlib logging", flush=True, file=sys.stderr)
-logging.basicConfig(level=logging.NOTSET, handlers=[InterceptHandler()])
 
-logging.debug("hello 1")
-logging.info("hello 1")
-logging.warning("hello 1")
-logging.error("hello 1")
-logging.critical("hello 1")
+async def task():
+    logger.info("hello in task")
+
+
+async def main():
+    bind_contextvars(a=1, b=2)
+    await task()
+
+
+asyncio.run(main())

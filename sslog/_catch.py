@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 
 if TYPE_CHECKING:
-    from sslog import _Logger
+    from sslog import Logger
 
 T = TypeVar("T", bound=Callable)
 
@@ -15,7 +15,7 @@ T = TypeVar("T", bound=Callable)
 class Catcher:
     def __init__(
         self,
-        logger: _Logger,
+        logger: Logger,
         exc: type[BaseException] | tuple[type[BaseException], ...],
         msg: str,
     ):
