@@ -3,8 +3,13 @@ repos:
     rev: v0.23
     hooks:
       - id: validate-pyproject
+        language: python
         # Optional extra validations from SchemaStore:
-        additional_dependencies: [ "validate-pyproject-schema-store[all]" ]
+        additional_dependencies:
+          - "validate-pyproject-schema-store[all]==2025.1.27"
+        args:
+          - --disable
+          - ruff
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -31,7 +36,7 @@ repos:
     rev: v0.8.0
     hooks:
       - id: ruff
-        args: [ --fix ]
+        args: [--fix]
 
   - repo: https://github.com/psf/black
     rev: 25.1.0
