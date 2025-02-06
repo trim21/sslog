@@ -33,6 +33,8 @@ __pycache__
 .httpx
 dist
 
+uv.lock
+
 
 # Added by cargo
 

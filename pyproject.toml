@@ -6,9 +6,7 @@ build-backend = "flit_core.buildapi"
 name = "sslog"
 version = "0.0.0a50"
 description = "opinionated logger based on structlog"
-authors = [
-    { name = "trim21", email = "trim21me@gmail.com" },
-]
+authors = [{ name = "trim21", email = "trim21me@gmail.com" }]
 readme = 'readme.md'
 license = { text = 'MIT' }
 classifiers = [
@@ -16,22 +14,11 @@ classifiers = [
     "Intended Audience :: Developers",
     "Typing :: Typed"
 ]
-
 requires-python = "~=3.8"
-
-dependencies = [
-    'structlog==24.4.0',
-    'typing-extensions',
-]
+dependencies = ['structlog==25.1.0', 'typing-extensions']
 
 [project.optional-dependencies]
-dev = [
-    "rich",
-    "colorama",
-    "mypy",
-    "pre-commit",
-    "loguru",
-]
+dev = ["rich", "colorama", "mypy", "pre-commit", "loguru"]
 
 [project.urls]
 Homepage = "https://github.com/trim21/sslog"
