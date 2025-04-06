@@ -1,12 +1,12 @@
 repos:
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.23
+    rev: v0.24.1
     hooks:
       - id: validate-pyproject
         language: python
         # Optional extra validations from SchemaStore:
         additional_dependencies:
-          - "validate-pyproject-schema-store[all]==2025.2.24"
+          - "validate-pyproject-schema-store[all]==2025.3.24"
         args:
           - --disable
           - ruff
@@ -33,7 +33,7 @@ repos:
         args: [--remove]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.9
+    rev: v0.11.4
     hooks:
       - id: ruff
         args: [--fix]
