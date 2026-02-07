@@ -16,7 +16,6 @@ from typing_extensions import ParamSpec, Self, overload
 from . import _default, _out, _process
 from ._base import make_filtering_bound_logger
 
-
 __all__ = ["logger", "LazyValue", "InterceptHandler", "Logger"]
 
 from ._default import LEVEL_TRACE

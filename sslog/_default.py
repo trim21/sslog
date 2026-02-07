@@ -5,7 +5,6 @@ from collections.abc import Callable
 from os import environ
 from typing import Any, TypeVar
 
-
 T = TypeVar("T")
 
 

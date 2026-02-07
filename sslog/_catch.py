@@ -5,7 +5,6 @@ from functools import wraps
 from inspect import isclass, iscoroutinefunction, isgeneratorfunction
 from typing import TYPE_CHECKING, TypeVar
 
-
 if TYPE_CHECKING:
     from sslog import Logger
 
