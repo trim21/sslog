@@ -17,8 +17,8 @@ classifiers = [
 requires-python = "~=3.8"
 dependencies = ['structlog==25.5.0', 'typing-extensions']
 
-[project.optional-dependencies]
-dev = ["rich", "colorama", "mypy", "pre-commit", "loguru"]
+[dependency-groups]
+dev = ["rich", "colorama", "mypy", "loguru"]
 
 [project.urls]
 Homepage = "https://github.com/trim21/sslog"
