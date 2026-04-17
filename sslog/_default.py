@@ -3,30 +3,38 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from os import environ
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast, overload
 
 T = TypeVar("T")
 
 
-def env(key: str, typ: Callable[[Any], T], default=None) -> T:
+@overload
+def env(key: str, typ: Callable[[Any], T]) -> T | None: ...
+
+
+@overload
+def env(key: str, typ: Callable[[Any], T], default: T) -> T: ...
+
+
+def env(key: str, typ: Callable[[Any], T], default: T | None = None) -> T | None:
     if key not in environ:
         return default
 
     val = environ[key]
 
     if typ is str:
-        return typ(val)
+        return cast(T, val)
     if typ is bool:
         if val.lower() in ["1", "true", "yes", "y", "ok", "on"]:
-            return typ(True)
+            return cast(T, True)
         if val.lower() in ["0", "false", "no", "n", "nok", "off"]:
-            return typ(False)
+            return cast(T, False)
         raise ValueError(
             "Invalid environment variable '%s' (expected a boolean): '%s'" % (key, val)
         )
     if typ is int:
         try:
-            return typ(val)
+            return cast(T, int(val))
         except ValueError:
             raise ValueError(
                 "Invalid environment variable '%s' (expected an integer): '%s'" % (key, val)
