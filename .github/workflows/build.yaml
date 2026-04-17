@@ -14,11 +14,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.x"
+          python-version: "3.12"
 
-      - run: pipx run build
+      - uses: astral-sh/setup-uv@v8.1.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          activate-environment: true
+
+      - run: uv build
 
       - name: Check Files
-        run: pipx run twine check --strict dist/*
+        run: uvx twine check --strict dist/*
