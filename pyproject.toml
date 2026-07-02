@@ -15,7 +15,7 @@ classifiers = [
     "Typing :: Typed"
 ]
 requires-python = "~=3.8"
-dependencies = ['structlog==25.5.0', 'typing-extensions']
+dependencies = ['structlog==26.1.0', 'typing-extensions']
 
 [dependency-groups]
 dev = ["rich", "colorama", "mypy", "loguru"]
