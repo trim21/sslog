@@ -29,17 +29,15 @@ def env(key: str, typ: Callable[[Any], T], default: T | None = None) -> T | None
             return cast(T, True)
         if val.lower() in ["0", "false", "no", "n", "nok", "off"]:
             return cast(T, False)
-        raise ValueError(
-            "Invalid environment variable '%s' (expected a boolean): '%s'" % (key, val)
-        )
+        raise ValueError(f"Invalid environment variable '{key}' (expected a boolean): '{val}'")
     if typ is int:
         try:
             return cast(T, int(val))
         except ValueError:
             raise ValueError(
-                "Invalid environment variable '%s' (expected an integer): '%s'" % (key, val)
+                f"Invalid environment variable '{key}' (expected an integer): '{val}'"
             ) from None
-    raise ValueError("The requested type '%r' is not supported" % typ)
+    raise ValueError(f"The requested type '{typ!r}' is not supported")
 
 
 use_json: bool = env("SSLOG_JSON", bool, False)

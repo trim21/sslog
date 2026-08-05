@@ -4,14 +4,14 @@ import contextlib
 import logging
 from collections.abc import Callable
 from inspect import isfunction
-from typing import Any, Type
+from typing import Any
 
-from sslog._catch import Catcher
 from structlog import BoundLoggerBase
 from structlog.contextvars import bind_contextvars, reset_contextvars
 from structlog.typing import FilteringBoundLogger
 
-from sslog._default import LOGGING_LEVELS, LEVEL_TRACE
+from sslog._catch import Catcher
+from sslog._default import LEVEL_TRACE, LOGGING_LEVELS
 
 
 def _nop(self: Any, event: str, *args: Any, **kw: Any) -> Any:
@@ -24,7 +24,7 @@ def exception(self: Any, event: str, *args: Any, **kw: Any) -> Any:
     return self.error(event, *args, **kw)
 
 
-def make_filtering_bound_logger(min_level: int) -> Type[FilteringBoundLogger]:
+def make_filtering_bound_logger(min_level: int) -> type[FilteringBoundLogger]:
     return LEVEL_TO_FILTERING_LOGGER[min_level]
 
 

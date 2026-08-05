@@ -4,9 +4,10 @@ import contextlib
 import json
 import logging
 import threading
-from datetime import datetime
+from collections.abc import Callable
+from datetime import datetime, timezone
 from logging import NOTSET
-from typing import Any, Protocol, TypeVar, cast, Callable
+from typing import Any, Protocol, TypeVar, cast
 
 import structlog
 from structlog.dev import Column
@@ -16,7 +17,7 @@ from typing_extensions import ParamSpec, Self, overload
 from . import _default, _out, _process
 from ._base import make_filtering_bound_logger
 
-__all__ = ["logger", "LazyValue", "InterceptHandler", "Logger"]
+__all__ = ["InterceptHandler", "LazyValue", "Logger", "logger"]
 
 from ._default import LEVEL_TRACE
 
@@ -86,11 +87,11 @@ class _ConsoleRender(structlog.dev.ConsoleRenderer):
 
 _NOT_SET = object()
 
-_start_up = datetime.now()
+_start_up = datetime.now(tz=timezone.utc)
 
 
 def __json_pre(_1, _2, event_dict: EventDict) -> EventDict:
-    now = datetime.now()
+    now = datetime.now(tz=timezone.utc)
 
     r = {
         "time": now.astimezone().isoformat(timespec="microseconds"),

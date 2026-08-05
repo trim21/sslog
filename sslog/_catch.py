@@ -39,8 +39,8 @@ class Catcher:
     def __call__(self, function: T) -> T:
         if isclass(function):
             raise TypeError(
-                "Invalid object decorated with 'catch()', it must be a function, "
-                "not a class (tried to wrap '%s')" % function.__name__
+                f"Invalid object decorated with 'catch()', it must be a function, "
+                f"not a class (tried to wrap '{function.__name__}')"
             )
 
         if iscoroutinefunction(function):

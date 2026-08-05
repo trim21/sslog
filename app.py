@@ -1,7 +1,6 @@
-from structlog import get_logger
-
 import asyncio
 
+from structlog import get_logger
 from structlog.contextvars import bind_contextvars
 
 logger = get_logger()
