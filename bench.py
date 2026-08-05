@@ -3,6 +3,7 @@ import os
 os.environ["SSLOG_JSON"] = "1"
 
 from loguru import logger as loguru_logger
+
 from sslog import logger
 
 loguru_logger.remove()
