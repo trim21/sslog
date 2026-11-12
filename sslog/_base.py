@@ -4,7 +4,7 @@ import contextlib
 import logging
 from collections.abc import Callable
 from inspect import isfunction
-from typing import Any
+from typing import Any, cast
 
 from structlog import BoundLoggerBase
 from structlog.contextvars import bind_contextvars, reset_contextvars
@@ -25,7 +25,7 @@ def exception(self: Any, event: str, *args: Any, **kw: Any) -> Any:
 
 
 def make_filtering_bound_logger(min_level: int) -> type[FilteringBoundLogger]:
-    return LEVEL_TO_FILTERING_LOGGER[min_level]
+    return cast(type[FilteringBoundLogger], LEVEL_TO_FILTERING_LOGGER[min_level])
 
 
 class _BoundLoggerBase(BoundLoggerBase):

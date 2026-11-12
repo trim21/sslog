@@ -46,14 +46,14 @@ class Catcher:
         if iscoroutinefunction(function):
 
             @wraps(function)
-            async def catch_wrapper(*args, **kwargs):
+            async def catch_async_wrapper(*args, **kwargs):
                 with self:
                     return await function(*args, **kwargs)
 
         elif isgeneratorfunction(function):
 
             @wraps(function)
-            def catch_wrapper(*args, **kwargs):
+            def catch_generator_wrapper(*args, **kwargs):
                 with self:
                     return (yield from function(*args, **kwargs))
 

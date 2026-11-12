@@ -9,6 +9,11 @@ tasks:
     cmds:
       - uv lock
 
+  typecheck:
+    cmds:
+      - uv run ty check .
+      - pyright .
+
   bump:
     vars:
       VERSION:
