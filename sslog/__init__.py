@@ -45,7 +45,7 @@ class _LogLevelColumnFormatter:
 
     def __init__(
         self,
-        level_styles: dict[str, str],
+        level_styles: dict[str, str] | None,
         reset_style: str,
         width: int | None = None,
     ) -> None:
@@ -66,11 +66,12 @@ class _LogLevelColumnFormatter:
 class _ConsoleRender(structlog.dev.ConsoleRenderer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        level_formatter = cast(structlog.dev.LogLevelColumnFormatter, self._columns[1].formatter)
         self._columns[1] = Column(
             "level",
             _LogLevelColumnFormatter(
-                self._columns[1].formatter.level_styles,
-                reset_style=self._columns[1].formatter.reset_style,
+                level_formatter.level_styles,
+                reset_style=level_formatter.reset_style,
                 width=7,
             ),
         )
@@ -81,7 +82,7 @@ class _ConsoleRender(structlog.dev.ConsoleRenderer):
     @staticmethod
     def get_default_level_styles(colors: bool = True) -> Any:
         c = structlog.dev.ConsoleRenderer.get_default_level_styles(colors)
-        c["trace"] = structlog.dev.CYAN
+        c["trace"] = cast(str, structlog.dev.CYAN)
         return c
 
 
@@ -270,17 +271,18 @@ class InterceptHandler(logging.Handler):
     def __init__(self, level: int = NOTSET):
         super().__init__(max(level, logger.level))
 
-    def handle(self, record):
+    def handle(self, record) -> bool:
         lvl = record.levelno
         if lvl < self.level:
-            return
+            return False
 
         lvl_name = _STD_LEVEL_TO_NAME[lvl]
 
         # Get corresponding level if it exists.
-        return logger._proxy_to_logger(
+        logger._proxy_to_logger(
             lvl_name,
             record.getMessage(),
             logger_name=record.name,
             _record=record,
         )
+        return True

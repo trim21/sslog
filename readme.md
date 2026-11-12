@@ -6,5 +6,7 @@ development dependencies are managed with `uv` and committed in `uv.lock`.
 
 ```bash
 uv sync --locked --group dev
-uv run mypy --show-column-numbers .
+task typecheck
 ```
+
+type checking is enforced by [ty](https://github.com/astral-sh/ty) and [pyright](https://microsoft.github.io/pyright/).
